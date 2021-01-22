@@ -51,7 +51,7 @@ type TpmQuoteResponse struct {
 	ErrorMessage    string   `xml:"errorMessage"`
 	Aik             string   `xml:"aik"`
 	Quote           string   `xml:"quote"`
-	EventLog        *string  `xml:"eventLog,omitempty"`
+	EventLog        string   `xml:"eventLog"`
 	TcbMeasurements struct {
 		XMLName         xml.Name `xml:"tcbMeasurements"`
 		TcbMeasurements []string `xml:"tcbMeasurements"`
@@ -179,7 +179,7 @@ func (ctx *TpmQuoteContext) readEventLog() error {
 	xml = strings.Replace(xml, "\n", "", -1)
 
 	eventLog := base64.StdEncoding.EncodeToString([]byte(xml))
-	ctx.tpmQuoteResponse.EventLog = &eventLog
+	ctx.tpmQuoteResponse.EventLog = eventLog
 	return nil
 }
 

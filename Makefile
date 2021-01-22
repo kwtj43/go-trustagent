@@ -22,6 +22,13 @@ swagger-doc:
 
 swagger: swagger-get swagger-doc
 
+docker_image: 
+	mkdir -p out/docker-image
+	cp dist/docker/Dockerfile out/docker-image
+	cp out/tagent out/docker-image
+	chmod +x out/docker-image/tagent
+	cd out/docker-image && docker build --tag=trust-agent-container --build-arg http_proxy=${http_proxy} --build-arg https_proxy=${http_proxy} .
+
 installer: gta
 	mkdir -p out/installer
 	cp dist/linux/tagent.service out/installer/tagent.service

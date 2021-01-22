@@ -401,10 +401,13 @@ func main() {
 		fmt.Println("tagent 'init' completed successful")
 
 	case "startService":
-		if currentUser.Username != constants.TagentUserName {
-			fmt.Printf("'tagent startWebService' must be run as the 'tagent' user, not  user '%s'\n", currentUser.Username)
-			os.Exit(1)
-		}
+		// TrustContainer:  running as root so remove this check
+		// TODO: Keep this code so that it is applicable to 'bare-metal' installations,
+		// ex. perhaps create a tagent user in the container.
+		// if currentUser.Username != constants.TagentUserName {
+		// 	fmt.Printf("'tagent startWebService' must be run as the 'tagent' user, not  user '%s'\n", currentUser.Username)
+		// 	os.Exit(1)
+		// }
 
 		cfg.LogConfiguration(cfg.Logging.LogEnableStdout)
 
