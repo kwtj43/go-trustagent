@@ -31,4 +31,4 @@ replace intel/isecl/lib/clients/v3 => github.com/intel-secl/clients/v3 v3.3.1
 
 replace github.com/vmware/govmomi => github.com/arijit8972/govmomi fix-tpm-attestation-output
 
-replace github.com/intel-secl/intel-secl/v3 => github.com/intel-secl/intel-secl/v3 v3.3.1
+replace github.com/intel-secl/intel-secl/v3 => github.com/kwtj43/intel-secl/v3 task/isecl-14326-host-info-updates
