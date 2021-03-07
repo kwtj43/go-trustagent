@@ -101,16 +101,16 @@ fi
 
 # if secure efi is not enabled, require tboot has been installed.  Note: This must
 # be done manually until RHEL 8.3 (a manual patch is required).
-bootctl status 2> /dev/null | grep 'Secure Boot: disabled' > /dev/null
-if [ $? -eq 0 ]; then
-    SUEFI_ENABLED="false"
+# bootctl status 2> /dev/null | grep 'Secure Boot: disabled' > /dev/null
+# if [ $? -eq 0 ]; then
+#     SUEFI_ENABLED="false"
     
-    rpm -qa | grep ${TBOOT_DEPENDENCY} >/dev/null
-    if [ $? -ne 0 ]; then
-      echo_failure "tboot must be installed on non SUEFI systems."
-      exit 1
-    fi
-fi
+#     rpm -qa | grep ${TBOOT_DEPENDENCY} >/dev/null
+#     if [ $? -ne 0 ]; then
+#       echo_failure "tboot must be installed on non SUEFI systems."
+#       exit 1
+#     fi
+# fi
 
 # if suefi is enabled, tboot should not be installed
 # exit with error when such scenario is detected
