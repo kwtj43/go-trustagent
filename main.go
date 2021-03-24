@@ -25,7 +25,6 @@ import (
 	commLog "intel/isecl/lib/common/v3/log"
 	"intel/isecl/lib/common/v3/log/message"
 	"intel/isecl/lib/common/v3/validation"
-	"intel/isecl/lib/platform-info/v3/platforminfo"
 	"intel/isecl/lib/tpmprovider/v3"
 	"os"
 	"os/exec"
@@ -34,6 +33,8 @@ import (
 	"strconv"
 	"strings"
 	"syscall"
+
+	"github.com/intel-secl/intel-secl/v3/pkg/lib/hostinfo"
 
 	"github.com/pkg/errors"
 )
@@ -153,11 +154,40 @@ Available Tasks for 'setup', all commands support env file flag
 	fmt.Println(usage)
 }
 
+func getHostInfoJSON() ([]byte, error) {
+	hostInfoParser, err := hostinfo.NewHostInfoParser()
+	if err != nil {
+		return nil, fmt.Errorf("Error creating host-info parser: %v", err)
+	}
+
+	hostInfo, err := hostInfoParser.Parse()
+	if err != nil {
+		return nil, errors.Wrap(err, "Error parsing host-info")
+	}
+
+	// TODO: wlagent
+	hostInfo.InstalledComponents = []string{"tagent"}
+
+	// serialize to json
+	b, err := json.MarshalIndent(hostInfo, "", "  ")
+	if err != nil {
+		return nil, errors.Wrap(err, "Error serializing hostinfo to JSON")
+	}
+
+	return b, err
+}
+
 func updatePlatformInfo() error {
 	log.Trace("main:updatePlatformInfo() Entering")
 	defer log.Trace("main:updatePlatformInfo() Leaving")
+
+	hostInfoJSON, err := getHostInfoJSON()
+	if err != nil {
+		return err
+	}
+
 	// make sure the system-info directory exists
-	_, err := os.Stat(constants.SystemInfoDir)
+	_, err = os.Stat(constants.SystemInfoDir)
 	if err != nil {
 		return errors.Wrapf(err, "main:updatePlatformInfo() Error while checking the existence of %s", constants.SystemInfoDir)
 	}
@@ -174,42 +204,42 @@ func updatePlatformInfo() error {
 		}
 	}()
 
-	// collect the platform info
-	secLog.Infof("%s main:updatePlatformInfo() Trying to fetch platform info", message.SU)
-	platformInfo, err := platforminfo.GetPlatformInfo()
-	if err != nil {
-		return errors.Wrap(err, "main:updatePlatformInfo() Error while fetching platform info")
-	}
-
-	// serialize to json
-	b, err := json.Marshal(platformInfo)
-	if err != nil {
-		return errors.Wrap(err, "main:updatePlatformInfo() Error while serializing platform info")
-	}
-
-	_, err = f.Write(b)
+	_, err = f.Write(hostInfoJSON)
 	if err != nil {
 		return errors.Wrapf(err, "main:updatePlatformInfo() Error while writing into File: %s", constants.PlatformInfoFilePath)
 	}
 
-	log.Info("main:updatePlatformInfo() Successfully updated platform-info")
+	log.Debug("main:updatePlatformInfo() Successfully updated platform-info")
 	return nil
+}
+
+func getEventLogJSON() ([]byte, error) {
+	secLog.Infof("%s main:getEventLogJSON() Running code to read EventLog", message.SU)
+	evParser := eventlog.NewEventLogParser(constants.EventLogFilePath, constants.Tpm2FilePath, constants.AppEventFilePath)
+	pcrEventLogs, err := evParser.GetEventLogs()
+	if err != nil {
+		return nil, errors.Wrap(err, "main:updateMeasureLog() There was an error while collecting PCR Event Log Data")
+	}
+
+	if pcrEventLogs == nil {
+		log.Info("main:updateMeasureLog() No events are there to update measure-log.json")
+	}
+
+	jsonData, err := json.MarshalIndent(pcrEventLogs, "", "  ")
+	if err != nil {
+		return nil, errors.Wrap(err, "main:updateMeasureLog() There was an error while serializing PCR Event Log Data")
+	}
+
+	return jsonData, nil
 }
 
 func updateMeasureLog() error {
 	log.Trace("main:updateMeasureLog() Entering")
 	defer log.Trace("main:updateMeasureLog() Leaving")
 
-	secLog.Infof("%s main:updateMeasureLog() Running code to read EventLog", message.SU)
-	evParser := eventlog.NewEventLogParser(constants.EventLogFilePath, constants.Tpm2FilePath, constants.AppEventFilePath)
-	pcrEventLogs, err := evParser.GetEventLogs()
+	jsonData, err := getEventLogJSON()
 	if err != nil {
-		return errors.Wrap(err, "main:updateMeasureLog() There was an error while collecting PCR Event Log Data")
-	}
-
-	jsonData, err := json.Marshal(pcrEventLogs)
-	if err != nil {
-		return errors.Wrap(err, "main:updateMeasureLog() There was an error while serializing PCR Event Log Data")
+		return err
 	}
 
 	jsonReport, err := os.OpenFile(constants.MeasureLogFilePath, os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0644)
@@ -226,12 +256,6 @@ func updateMeasureLog() error {
 	_, err = jsonReport.Write(jsonData)
 	if err != nil {
 		return errors.Wrapf(err, "main:updateMeasureLog() There was an error while writing in %s", constants.MeasureLogFilePath)
-	}
-
-	if pcrEventLogs != nil {
-		log.Info("main:updateMeasureLog() Successfully updated measure-log.json")
-	} else {
-		log.Info("main:updateMeasureLog() No events are there to update measure-log.json")
 	}
 
 	return nil
@@ -355,6 +379,34 @@ func main() {
 	switch cmd {
 	case "version":
 		printVersion()
+	case "hostinfo":
+		if currentUser.Username != constants.RootUserName {
+			fmt.Printf("'tagent hostinfo' must be run as root, not user '%s'\n", currentUser.Username)
+			os.Exit(1)
+		}
+
+		hostInfoJSON, err := getHostInfoJSON()
+		if err != nil {
+			fmt.Printf("%+v\n", err)
+			os.Exit(1)
+		}
+
+		fmt.Println(string(hostInfoJSON))
+
+	case "eventlog":
+		if currentUser.Username != constants.RootUserName {
+			fmt.Printf("'tagent eventlog' must be run as root, not user '%s'\n", currentUser.Username)
+			os.Exit(1)
+		}
+
+		eventLogJSON, err := getEventLogJSON()
+		if err != nil {
+			fmt.Printf("%+v\n", err)
+			os.Exit(1)
+		}
+
+		fmt.Println(string(eventLogJSON))
+
 	case "init":
 
 		//
@@ -367,7 +419,7 @@ func main() {
 		// always run 'tagent_init'.
 		//
 		if currentUser.Username != constants.RootUserName {
-			fmt.Printf("'tagent start' must be run as root, not  user '%s'\n", currentUser.Username)
+			fmt.Printf("'tagent start' must be run as root, not user '%s'\n", currentUser.Username)
 			os.Exit(1)
 		}
 

@@ -98,6 +98,17 @@ if [ $? -eq 0 ]; then
     exit 1
 fi
 
+# if suefi is enabled, tboot should not be installed
+# exit with error when such scenario is detected
+bootctl status 2> /dev/null | grep 'Secure Boot: enabled' > /dev/null
+if [ $? -eq 0 ]; then
+  rpm -qa | grep ${TBOOT_DEPENDENCY} >/dev/null
+  if [ $? -eq 0 ]; then
+    echo_failure "tagent cannot be installed on a system with both tboot and secure-boot enabled"
+    exit 1
+  fi
+fi
+
 install_packages() {
   local yum_packages=$(eval "echo \$TRUSTAGENT_YUM_PACKAGES")
 

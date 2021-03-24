@@ -17,7 +17,6 @@ require (
 	gopkg.in/yaml.v2 v2.3.0
 	intel/isecl/lib/clients/v3 v3.3.1
 	intel/isecl/lib/common/v3 v3.3.1
-	intel/isecl/lib/platform-info/v3 v3.2.1
 	intel/isecl/lib/tpmprovider/v3 v3.3.1
 )
 
@@ -25,10 +24,8 @@ replace intel/isecl/lib/common/v3 => github.com/intel-secl/common/v3 v3.3.1
 
 replace intel/isecl/lib/tpmprovider/v3 => github.com/intel-secl/tpm-provider/v3 v3.3.1
 
-replace intel/isecl/lib/platform-info/v3 => github.com/mjeyarax/platform-info/v3 v3.2.1-0.20201230090848-3664c4f5f241
-
 replace intel/isecl/lib/clients/v3 => github.com/intel-secl/clients/v3 v3.3.1
 
 replace github.com/vmware/govmomi => github.com/arijit8972/govmomi fix-tpm-attestation-output
 
-replace github.com/intel-secl/intel-secl/v3 => github.com/intel-secl/intel-secl/v3 v3.3.1
+replace github.com/intel-secl/intel-secl/v3 => github.com/kwtj43/intel-secl/v3 feature/tep_poc

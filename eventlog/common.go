@@ -63,6 +63,7 @@ const (
 	Event00000012 = 0x00000012
 	Event00000010 = 0x00000010
 	Event00000011 = 0x00000011
+	EV_IPL        = 0x0000000D
 	// SHA Types
 	SHA1    = "SHA1"
 	SHA256  = "SHA256"
@@ -450,7 +451,7 @@ func getEventTag(eventType uint32, eventData []byte, eventSize uint32, pcrIndex 
 	// Handling EV_POST_CODE, EV_ACTION, EV_EFI_ACTION, EV_PLATFORM_CONFIG_FLAGS, EV_COMPACT_HASH(Only when PCR6),
 	// EV_OMIT_BOOT_DEVICE_EVENTS and EV_EFI_HCRTM_EVENT all these events as the event data is a String.
 	//EV_S_CRTM_CONTENTS also having descriptive string only in real time. But in spec it is mentioned that this event will have UEFI_PLATFORM_FIRMWARE_BLOB2 data. To make this work handling here.
-	if eventType == Event00000001 || eventType == Event00000005 || eventType == Event80000007 || eventType == Event0000000A || (eventType == Event0000000C && pcrIndex == 0x6) || eventType == Event00000012 || eventType == Event80000010 || eventType == Event00000007 {
+	if eventType == EV_IPL || eventType == Event00000001 || eventType == Event00000005 || eventType == Event80000007 || eventType == Event0000000A || (eventType == Event0000000C && pcrIndex == 0x6) || eventType == Event00000012 || eventType == Event80000010 || eventType == Event00000007 {
 		buf := bytes.NewBuffer(eventData)
 		postCode := buf.Next(int(eventSize))
 		tagName := fmt.Sprintf("%s", postCode)
