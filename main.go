@@ -165,9 +165,6 @@ func getHostInfoJSON() ([]byte, error) {
 		return nil, errors.Wrap(err, "Error parsing host-info")
 	}
 
-	// TODO: wlagent
-	hostInfo.InstalledComponents = []string{"tagent"}
-
 	// serialize to json
 	b, err := json.MarshalIndent(hostInfo, "", "  ")
 	if err != nil {
