@@ -11,21 +11,17 @@ import (
 	"crypto/x509"
 	"encoding/binary"
 	"encoding/pem"
-	"math/big"
-
-	"github.com/intel-secl/intel-secl/v3/pkg/lib/privacyca"
-
 	"fmt"
 	"intel/isecl/go-trust-agent/v3/constants"
 	"intel/isecl/go-trust-agent/v3/util"
-	"intel/isecl/lib/common/v3/crypt"
 	"intel/isecl/lib/common/v3/setup"
 	"intel/isecl/lib/tpmprovider/v3"
 	"os"
 
 	"github.com/intel-secl/intel-secl/v3/pkg/clients/hvsclient"
+	"github.com/intel-secl/intel-secl/v3/pkg/lib/common/crypt"
+	"github.com/intel-secl/intel-secl/v3/pkg/lib/privacyca"
 	taModel "github.com/intel-secl/intel-secl/v3/pkg/model/ta"
-
 	"github.com/pkg/errors"
 )
 
@@ -253,12 +249,8 @@ func (task *ProvisionAttestationIdentityKey) populateIdentityRequest(identityReq
 		return err
 	}
 
-	identityRequest.IdentityRequestBlock = aikPublicKeyBytes
 	identityRequest.AikModulus = aikPublicKeyBytes
-
 	identityRequest.TpmVersion = "2.0" // Assume TPM 2.0 for GTA (1.2 is no longer supported)
-	identityRequest.AikBlob = new(big.Int).SetInt64(tpmprovider.TPM_HANDLE_AIK).Bytes()
-
 	identityRequest.AikName, err = tpm.GetAikName()
 	if err != nil {
 		return errors.Wrap(err, "Error while retrieving Aik Name from tpm")

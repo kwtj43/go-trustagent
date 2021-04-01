@@ -10,26 +10,26 @@ import (
 	"fmt"
 	"intel/isecl/go-trust-agent/v3/config"
 	"intel/isecl/go-trust-agent/v3/constants"
-	"intel/isecl/lib/clients/v3"
-	"intel/isecl/lib/common/v3/auth"
-	commContext "intel/isecl/lib/common/v3/context"
-	"intel/isecl/lib/common/v3/crypt"
-	commLog "intel/isecl/lib/common/v3/log"
-	"intel/isecl/lib/common/v3/log/message"
-	"intel/isecl/lib/common/v3/middleware"
-	ct "intel/isecl/lib/common/v3/types/aas"
 	"intel/isecl/lib/tpmprovider/v3"
 	"io/ioutil"
 	stdlog "log"
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
-	"github.com/jinzhu/gorm"
+	"github.com/intel-secl/intel-secl/v3/pkg/clients"
+	"github.com/intel-secl/intel-secl/v3/pkg/lib/common/auth"
+	commContext "github.com/intel-secl/intel-secl/v3/pkg/lib/common/context"
+	"github.com/intel-secl/intel-secl/v3/pkg/lib/common/crypt"
+	commLog "github.com/intel-secl/intel-secl/v3/pkg/lib/common/log"
+	"github.com/intel-secl/intel-secl/v3/pkg/lib/common/log/message"
+	"github.com/intel-secl/intel-secl/v3/pkg/lib/common/middleware"
+	ct "github.com/intel-secl/intel-secl/v3/pkg/model/aas"
 	"github.com/pkg/errors"
 )
 
@@ -76,7 +76,6 @@ func (e endpointError) Error() string {
 }
 
 var cacheTime, _ = time.ParseDuration(constants.JWTCertsCacheTime)
-var clog = commLog.GetDefaultLogger()
 var seclog = commLog.GetSecurityLogger()
 
 func CreateTrustAgentService(config *config.TrustAgentConfiguration, tpmFactory tpmprovider.TpmFactory) (*TrustAgentService, error) {
@@ -96,7 +95,7 @@ func CreateTrustAgentService(config *config.TrustAgentConfiguration, tpmFactory 
 	// ISECL-8715 - Prevent potential open redirects to external URLs
 	trustAgentService.router.SkipClean(true)
 
-	noAuthRouter := trustAgentService.router.PathPrefix("").Subrouter()
+	noAuthRouter := trustAgentService.router.PathPrefix("/v2/").Subrouter()
 	noAuthRouter.HandleFunc("/version", errorHandler(getVersion())).Methods("GET")
 	authRouter := trustAgentService.router.PathPrefix("/v2/").Subrouter()
 	authRouter.Use(middleware.NewTokenAuth(constants.TrustedJWTSigningCertsDir, constants.TrustedCaCertsDir, fnGetJwtCerts, cacheTime))
@@ -226,7 +225,7 @@ func errorHandler(eh endpointHandler) http.HandlerFunc {
 	defer log.Trace("resource/service:errorHandler() Leaving")
 	return func(w http.ResponseWriter, r *http.Request) {
 		if err := eh(w, r); err != nil {
-			if gorm.IsRecordNotFoundError(err) {
+			if strings.TrimSpace(strings.ToLower(err.Error())) == "record not found" {
 				http.Error(w, err.Error(), http.StatusNotFound)
 				return
 			}
@@ -254,12 +253,18 @@ func fnGetJwtCerts() error {
 
 	aasURL := cfg.AAS.BaseURL
 
-	url := aasURL + "noauth/jwt-certificates"
+	url := aasURL + "jwt-certificates"
 	req, _ := http.NewRequest("GET", url, nil)
 	req.Header.Add("accept", "application/x-pem-file")
 	secLog.Debugf("resource/service::fnGetJwtCerts() Connecting to AAS Endpoint %s", url)
 
-	hc, err := clients.HTTPClientWithCADir(constants.TrustedCaCertsDir)
+	caCerts, err := crypt.GetCertsFromDir(constants.TrustedCaCertsDir)
+	if err != nil {
+		log.WithError(err).Errorf("resource/service::fnGetJwtCerts() Error while getting certs from %s", constants.TrustedCaCertsDir)
+		return errors.Wrap(err, "resource/service::fnGetJwtCerts() Error while getting certs from %s")
+	}
+
+	hc, err := clients.HTTPClientWithCA(caCerts)
 	if err != nil {
 		return errors.Wrap(err, "resource/service:fnGetJwtCerts() Error setting up HTTP client")
 	}

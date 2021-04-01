@@ -6,21 +6,17 @@ package resource
 
 import (
 	"bytes"
-	//	"encoding/hex"
 	"fmt"
+	"intel/isecl/go-trust-agent/v3/config"
+	"intel/isecl/lib/tpmprovider/v3"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
-	"intel/isecl/go-trust-agent/v3/config"
-	"intel/isecl/lib/tpmprovider/v3"
-
-	"intel/isecl/lib/common/v3/middleware"
-
+	"github.com/gorilla/mux"
+	"github.com/intel-secl/intel-secl/v3/pkg/lib/common/middleware"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-
-	"github.com/gorilla/mux"
 )
 
 const (

@@ -13,7 +13,6 @@ import (
 	"encoding/xml"
 	"intel/isecl/go-trust-agent/v3/config"
 	"intel/isecl/go-trust-agent/v3/constants"
-	"intel/isecl/lib/common/v3/log/message"
 	"intel/isecl/lib/tpmprovider/v3"
 	"io/ioutil"
 	"net/http"
@@ -21,6 +20,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/intel-secl/intel-secl/v3/pkg/lib/common/log/message"
 	"github.com/pkg/errors"
 )
 
@@ -183,7 +183,6 @@ func (ctx *TpmQuoteContext) getQuote(tpmQuoteRequest *TpmQuoteRequest) error {
 	}
 
 	log.Debugf("resource/quote:getQuote() Providing tpm nonce value '%s', raw[%s]", base64.StdEncoding.EncodeToString(nonce), hex.EncodeToString(nonce))
-
 	quoteBytes, err := ctx.tpm.GetTpmQuote(ctx.cfg.Tpm.AikSecretKey, nonce, tpmQuoteRequest.PcrBanks, tpmQuoteRequest.Pcrs)
 	if err != nil {
 		return err
@@ -340,6 +339,19 @@ func getTpmQuote(cfg *config.TrustAgentConfiguration, tpmFactory tpmprovider.Tpm
 		if len(tpmQuoteRequest.Nonce) == 0 {
 			seclog.Errorf("resource/quote:getTpmQuote() %s - The TpmQuoteRequest does not contain a nonce", message.InvalidInputProtocolViolation)
 			return &endpointError{Message: "The TpmQuoteRequest does not contain a nonce", StatusCode: http.StatusBadRequest}
+		}
+
+		// ISECL-12121: strip inactive PCR Banks from the request
+		for i, pcrBank := range tpmQuoteRequest.PcrBanks {
+			isActive, err := tpm.IsPcrBankActive(pcrBank)
+			if !isActive {
+				log.Infof("resource/quote:getQuote() %s PCR bank is inactive. Dropping from quote request. %s",
+					pcrBank, err.Error())
+				tpmQuoteRequest.PcrBanks = append(tpmQuoteRequest.PcrBanks[:i], tpmQuoteRequest.PcrBanks[i+1:]...)
+			} else if err != nil {
+				log.WithError(err).Errorf("resource/quote:getQuote() Error while determining PCR bank "+
+					"%s state: %s", pcrBank, err.Error())
+			}
 		}
 
 		err = ctx.createTpmQuote(&tpmQuoteRequest)

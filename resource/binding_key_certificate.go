@@ -6,11 +6,12 @@ package resource
 
 import (
 	"bytes"
-	"intel/isecl/go-trust-agent/v3/constants"
-	"intel/isecl/lib/common/v3/log/message"
 	"io/ioutil"
 	"net/http"
 	"os"
+
+	"github.com/intel-secl/intel-secl/v3/pkg/lib/common/log/message"
+	"intel/isecl/go-trust-agent/v3/constants"
 )
 
 // Returns the WLA provisioned binding key certificate from /etc/workload-agent/bindingkey.pem

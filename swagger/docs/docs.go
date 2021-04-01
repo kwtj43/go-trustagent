@@ -22,15 +22,6 @@
 // swagger:meta
 package docs
 
-import "intel/isecl/go-trust-agent/v3/util"
-
-// VersionResponseInfo response payload
-// swagger:response VersionResponseInfo
-type VersionResponseInfo struct {
-	// in:body
-	Body util.VersionInfo
-}
-
 // swagger:operation GET /version Version getVersion
 // ---
 // description: Retrieves the version of trust agent.
@@ -40,17 +31,10 @@ type VersionResponseInfo struct {
 // responses:
 //   "200":
 //     description: Successfully retrieved the version of trust agent.
-//     schema:
-//       "$ref": "#/definitions/VersionInfo"
 //
 // x-sample-call-endpoint: https://trustagent.server.com:1443/version
 // x-sample-call-output: |
-//    {
-//        "major": 1,
-//        "minor": 0,
-//        "patch": 0,
-//        "commit": "34d89de",
-//        "built": "2020-04-18T14:52:14Z",
-//        "version_string": "Trust Agent v2.2.0-34d89de\nBuilt 2020-05-04T14:52:14Z\n"
-//    }
+//    Service Name: Trust Agent
+//    Version: v3.4.0-1ebcfcd
+//    Build Date: 2021-03-01T17:39:16+0000
 // ---

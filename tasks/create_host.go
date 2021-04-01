@@ -6,12 +6,13 @@ package tasks
 
 import (
 	"fmt"
+	"intel/isecl/go-trust-agent/v3/util"
+	"intel/isecl/lib/common/v3/setup"
+
 	"github.com/intel-secl/intel-secl/v3/pkg/clients/hvsclient"
 	"github.com/intel-secl/intel-secl/v3/pkg/hvs/domain/models"
 	"github.com/intel-secl/intel-secl/v3/pkg/model/hvs"
 	"github.com/pkg/errors"
-	"intel/isecl/go-trust-agent/v3/util"
-	"intel/isecl/lib/common/v3/setup"
 )
 
 type CreateHost struct {

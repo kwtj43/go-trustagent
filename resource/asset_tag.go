@@ -7,12 +7,13 @@ package resource
 import (
 	"bytes"
 	"encoding/json"
-	"intel/isecl/go-trust-agent/v3/config"
-	"intel/isecl/lib/common/v3/log/message"
-	"intel/isecl/lib/common/v3/validation"
-	"intel/isecl/lib/tpmprovider/v3"
 	"io/ioutil"
 	"net/http"
+
+	"github.com/intel-secl/intel-secl/v3/pkg/lib/common/log/message"
+	"github.com/intel-secl/intel-secl/v3/pkg/lib/common/validation"
+	"intel/isecl/go-trust-agent/v3/config"
+	"intel/isecl/lib/tpmprovider/v3"
 )
 
 // json request format sent from HVS...

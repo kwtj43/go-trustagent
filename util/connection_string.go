@@ -6,11 +6,12 @@ package util
 
 import (
 	"fmt"
-	"github.com/pkg/errors"
 	"intel/isecl/go-trust-agent/v3/constants"
-	commLog "intel/isecl/lib/common/v3/log"
 	"net"
 	"os"
+
+	commLog "github.com/intel-secl/intel-secl/v3/pkg/lib/common/log"
+	"github.com/pkg/errors"
 )
 
 var log = commLog.GetDefaultLogger()

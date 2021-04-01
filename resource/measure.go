@@ -8,11 +8,12 @@ import (
 	"bytes"
 	"encoding/xml"
 	"intel/isecl/go-trust-agent/v3/constants"
-	"intel/isecl/lib/common/v3/log/message"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"os/exec"
+
+	"github.com/intel-secl/intel-secl/v3/pkg/lib/common/log/message"
 )
 
 const WML_LOG_FILE = constants.LogDir + "wml.log"

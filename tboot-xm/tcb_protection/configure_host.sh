@@ -143,9 +143,9 @@ function generate_kernel_args()
 	KERNEL_ARGS="MANIFEST_PATH=\"$MANIFEST_PATH\"\nPARTITION_INFO=\"$PARTITION_INFO\""
 	echo $KERNEL_ARGS
 	chattr -i $CONFIG_FILE_NAME > /dev/null 2>&1
-	rm -rf $CONFIG_FILE_NAME
+	rm -rf $CONFIG_FILE_NAME > /dev/null 2>&1
 	echo -e $KERNEL_ARGS > $CONFIG_FILE_NAME
-	chattr +i $CONFIG_FILE_NAME
+	chattr +i $CONFIG_FILE_NAME > /dev/null 2>&1
 	echo ""
 }
 

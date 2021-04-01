@@ -6,8 +6,9 @@
 package util
 
 import (
-	"github.com/pkg/errors"
 	"intel/isecl/lib/tpmprovider/v3"
+
+	"github.com/pkg/errors"
 )
 
 func GetEndorsementKeyCertificateBytes(ownerSecretKey string) ([]byte, error) {

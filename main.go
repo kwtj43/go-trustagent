@@ -21,10 +21,6 @@ import (
 	_ "intel/isecl/go-trust-agent/v3/swagger/docs"
 	"intel/isecl/go-trust-agent/v3/tasks"
 	"intel/isecl/go-trust-agent/v3/util"
-	commonExec "intel/isecl/lib/common/v3/exec"
-	commLog "intel/isecl/lib/common/v3/log"
-	"intel/isecl/lib/common/v3/log/message"
-	"intel/isecl/lib/common/v3/validation"
 	"intel/isecl/lib/tpmprovider/v3"
 	"os"
 	"os/exec"
@@ -34,8 +30,11 @@ import (
 	"strings"
 	"syscall"
 
+	commonExec "github.com/intel-secl/intel-secl/v3/pkg/lib/common/exec"
+	commLog "github.com/intel-secl/intel-secl/v3/pkg/lib/common/log"
+	"github.com/intel-secl/intel-secl/v3/pkg/lib/common/log/message"
+	"github.com/intel-secl/intel-secl/v3/pkg/lib/common/validation"
 	"github.com/intel-secl/intel-secl/v3/pkg/lib/hostinfo"
-
 	"github.com/pkg/errors"
 )
 
@@ -259,7 +258,6 @@ func updateMeasureLog() error {
 }
 
 func printVersion() {
-
 	versionInfo, err := util.GetVersionInfo()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error while getting version info: %v \n", err)
@@ -269,7 +267,7 @@ func printVersion() {
 	if len(os.Args) > 2 && os.Args[2] == "short" {
 		fmt.Printf("%d.%d\n", versionInfo.Major, versionInfo.Minor)
 	} else {
-		fmt.Printf(versionInfo.VersionString)
+		fmt.Printf(util.GetVersion())
 	}
 }
 
@@ -586,17 +584,24 @@ func main() {
 			fmt.Fprintf(os.Stderr, "Error loading environment variables\n %v \n\n", err)
 		}
 
-		registry, err := tasks.CreateTaskRegistry(cfg)
+		runner, err := tasks.CreateTaskRunner(setupCommand, cfg)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error while creating task registry \n Error: %s\n", err.Error())
-			log.Errorf("main:main() Error while creating task registry %+v", err)
+			fmt.Fprintf(os.Stderr, "Error while creating task runner \n Error: %s\n", err.Error())
+			log.Errorf("main:main() Error while creating task runner %+v", err)
 			os.Exit(1)
 		}
 
-		err = registry.RunCommand(setupCommand)
+		err = runner.RunTasks()
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error while running setup Command %s, \n Error: %s\n ", setupCommand, err.Error())
 			log.Errorf("main:main() Error while running setup Command %s, %+v", setupCommand, err)
+			os.Exit(1)
+		}
+		// always update the cofig.yaml regardless of error (so TPM owner/aik are persisted)
+		err = cfg.Save()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error while saving configuration, \n Error: %s\n ", err.Error())
+			log.Errorf("main:main() Error while saving configuration, %+v", err)
 			os.Exit(1)
 		}
 

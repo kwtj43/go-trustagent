@@ -6,22 +6,22 @@ package config
 
 import (
 	"fmt"
-	"intel/isecl/go-trust-agent/v3/constants"
-	commLog "intel/isecl/lib/common/v3/log"
-	"intel/isecl/lib/common/v3/log/message"
-	commLogInt "intel/isecl/lib/common/v3/log/setup"
-	"intel/isecl/lib/common/v3/setup"
-	"intel/isecl/lib/common/v3/validation"
 	"io"
 	"os"
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
+	commLog "github.com/intel-secl/intel-secl/v3/pkg/lib/common/log"
+	"github.com/intel-secl/intel-secl/v3/pkg/lib/common/log/message"
+	commLogInt "github.com/intel-secl/intel-secl/v3/pkg/lib/common/log/setup"
+	"github.com/intel-secl/intel-secl/v3/pkg/lib/common/validation"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
-	"time"
+	"intel/isecl/go-trust-agent/v3/constants"
+	"intel/isecl/lib/common/v3/setup"
 )
 
 const (

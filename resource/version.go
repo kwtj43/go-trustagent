@@ -6,9 +6,7 @@ package resource
 
 import (
 	"bytes"
-	"encoding/json"
 	"intel/isecl/go-trust-agent/v3/util"
-	"intel/isecl/lib/common/v3/log/message"
 	"net/http"
 )
 
@@ -18,24 +16,11 @@ func getVersion() endpointHandler {
 		log.Trace("resource/version:getVersion() Entering")
 		defer log.Trace("resource/version:getVersion() Leaving")
 
-		versionInfo, err := util.GetVersionInfo()
-		if err != nil {
-			log.Errorf("resource/version:getVersion() %s - There was an error retrieving version info: %s", message.AppRuntimeErr, err)
-			return &endpointError{Message: "Unable to get version info", StatusCode: http.StatusInternalServerError}
-		}
-
-		// serialize to json
-		jsonData, err := json.Marshal(versionInfo)
-		if err != nil {
-			log.Errorf("resource/version:getVersion() %s Error while serializing version info: %s", message.AppRuntimeErr, err)
-			return &endpointError{Message: "Error while serializing version info", StatusCode: http.StatusInternalServerError}
-		}
-
-		log.Debugf("resource/version:getVersion() Trust Agent Version:\n %s", string(jsonData))
-
-		httpWriter.Header().Set("Content-Type", "application/json")
+		httpWriter.Header().Add("Strict-Transport-Security", "max-age=63072000; includeSubDomains")
+		log.Debugf("resource/version:getVersion() Trust Agent Version:\n %s", util.GetVersion())
+		httpWriter.Header().Set("Content-Type", "text/plain")
 		httpWriter.WriteHeader(http.StatusOK)
-		_, _ = bytes.NewBuffer(jsonData).WriteTo(httpWriter)
+		_, _ = bytes.NewBuffer([]byte(util.GetVersion())).WriteTo(httpWriter)
 		return nil
 	}
 }

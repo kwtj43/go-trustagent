@@ -6,6 +6,7 @@ package util
 
 import (
 	"fmt"
+	"intel/isecl/go-trust-agent/v3/constants"
 	"strconv"
 	"strings"
 	"time"
@@ -117,4 +118,11 @@ func GetVersionInfo() (*VersionInfo, error) {
 	}
 
 	return versionInfo, nil
+}
+
+func GetVersion() string {
+	verStr := fmt.Sprintf("Service Name: %s\n", constants.ExplicitServiceName)
+	verStr = verStr + fmt.Sprintf("Version: %s-%s\n", Version, GitHash)
+	verStr = verStr + fmt.Sprintf("Build Date: %s\n", BuildDate)
+	return verStr
 }

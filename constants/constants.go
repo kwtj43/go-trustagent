@@ -37,6 +37,7 @@ const (
 	DefaultLogEntryMaxlength   = 300
 	FlavorLabels               = "FLAVOR_LABELS"
 	ServiceName                = "tagent.service"
+	ExplicitServiceName        = "Trust Agent"
 	AASServiceName             = "TA"
 	ServiceStatusCommand       = "systemctl status " + ServiceName
 	ServiceStopCommand         = "systemctl stop " + ServiceName

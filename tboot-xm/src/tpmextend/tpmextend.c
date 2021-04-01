@@ -221,7 +221,7 @@ int main(int argc, char** argv) {
 	tpmfd = open(TPMDEVICE, O_RDWR);
 
     if(tpmfd < 0) {
-        fprintf(STDOUT, "Cann't open %s\n", TPMDEVICE);
+        fprintf(STDOUT, "Can't open %s\n", TPMDEVICE);
 		// print which type of error have in a code
         fprintf(STDOUT, "Error Number % d\n", errno); 
          
