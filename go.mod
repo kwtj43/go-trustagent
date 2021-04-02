@@ -19,6 +19,6 @@ replace (
 	github.com/intel-secl/intel-secl/v3 => github.com/kwtj43/intel-secl/v3 feature/tep_poc
 	github.com/vmware/govmomi => github.com/arijit8972/govmomi fix-tpm-attestation-output
 	intel/isecl/lib/common/v3 => github.com/intel-secl/common/v3 v3.5.0
-	intel/isecl/lib/platform-info/v3 => github.com/intel-secl/platform-info/v3 v3.5.0
+	intel/isecl/lib/platform-info/v3 => github.com/mjeyarax/platform-info/v3 master
 	intel/isecl/lib/tpmprovider/v3 => github.com/intel-secl/tpm-provider/v3 v3.5.0
 )
