@@ -6,20 +6,21 @@ package docs
 
 import (
 	"intel/isecl/go-trust-agent/v3/resource"
+	taModel "github.com/intel-secl/intel-secl/v3/pkg/model/ta"
 )
 
 // TpmQuoteRequestInfo request payload
 // swagger:parameters TpmQuoteRequestInfo
 type TpmQuoteRequestInfo struct {
 	// in:body
-	Body resource.TpmQuoteRequest
+	Body taModel.TpmQuoteRequest
 }
 
 // TpmQuoteResponseInfo response payload
 // swagger:response TpmQuoteResponseInfo
 type TpmQuoteResponseInfo struct {
 	// in:body
-	Body resource.TpmQuoteResponse
+	Body taModel.TpmQuoteResponse
 }
 
 // TagWriteRequestInfo request payload

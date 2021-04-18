@@ -13,6 +13,9 @@ import (
 	"sync"
 	"time"
 
+	"intel/isecl/go-trust-agent/v3/constants"
+	"intel/isecl/lib/common/v3/setup"
+
 	commLog "github.com/intel-secl/intel-secl/v3/pkg/lib/common/log"
 	"github.com/intel-secl/intel-secl/v3/pkg/lib/common/log/message"
 	commLogInt "github.com/intel-secl/intel-secl/v3/pkg/lib/common/log/setup"
@@ -20,8 +23,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
-	"intel/isecl/go-trust-agent/v3/constants"
-	"intel/isecl/lib/common/v3/setup"
 )
 
 const (
@@ -64,6 +65,9 @@ type TrustAgentConfiguration struct {
 	TLS struct {
 		CertSAN string // SAN_LIST
 		CertCN  string // TA_TLS_CERT_CN
+	}
+	Nats struct {
+		URL string
 	}
 }
 

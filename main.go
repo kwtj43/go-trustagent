@@ -17,6 +17,7 @@ import (
 	"intel/isecl/go-trust-agent/v3/config"
 	"intel/isecl/go-trust-agent/v3/constants"
 	"intel/isecl/go-trust-agent/v3/eventlog"
+	"intel/isecl/go-trust-agent/v3/subscriber"
 	"intel/isecl/go-trust-agent/v3/resource"
 	_ "intel/isecl/go-trust-agent/v3/swagger/docs"
 	"intel/isecl/go-trust-agent/v3/tasks"
@@ -24,6 +25,7 @@ import (
 	"intel/isecl/lib/tpmprovider/v3"
 	"os"
 	"os/exec"
+	"io/ioutil"
 	"os/user"
 	"path/filepath"
 	"strconv"
@@ -34,8 +36,10 @@ import (
 	commLog "github.com/intel-secl/intel-secl/v3/pkg/lib/common/log"
 	"github.com/intel-secl/intel-secl/v3/pkg/lib/common/log/message"
 	"github.com/intel-secl/intel-secl/v3/pkg/lib/common/validation"
+	taModel "github.com/intel-secl/intel-secl/v3/pkg/model/ta"
 	"github.com/intel-secl/intel-secl/v3/pkg/lib/hostinfo"
 	"github.com/pkg/errors"
+	"github.com/google/uuid"
 )
 
 var log = commLog.GetDefaultLogger()
@@ -151,6 +155,22 @@ Available Tasks for 'setup', all commands support env file flag
     `
 
 	fmt.Println(usage)
+}
+
+func readHostInfo() (*taModel.HostInfo, error) {
+	var hostInfo taModel.HostInfo
+
+	hostInfoJSON, err := ioutil.ReadFile(constants.PlatformInfoFilePath)
+	if err != nil {
+		return nil, err
+	}
+
+	err = json.Unmarshal(hostInfoJSON, &hostInfo)
+	if err != nil {
+		return nil, err
+	}
+
+	return &hostInfo, nil
 }
 
 func getHostInfoJSON() ([]byte, error) {
@@ -472,6 +492,22 @@ func main() {
 		})
 
 		fmt.Println("tagent 'init' completed successful")
+	
+	case "push":
+		hostInfo, err := readHostInfo()
+		if err != nil {
+			log.Errorf("main:main() Could not read host-info: %+v", err)
+			os.Exit(1)
+		}
+		
+		hardwareUUID := uuid.MustParse(hostInfo.HardwareUUID)
+
+		subscriber := subscriber.NewHVSSubsriber(cfg, hardwareUUID)
+		err = subscriber.Start() 
+		if err != nil {
+			log.Errorf("main:main() Error while starting nats client: %+v", err)
+			os.Exit(1)
+		}
 
 	case "startService":
 		if currentUser.Username != constants.TagentUserName {
