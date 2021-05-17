@@ -1,6 +1,7 @@
 package subscriber
 
 import (
+	"crypto/tls"
 	"crypto/x509"
 	"encoding/json"
 	"encoding/pem"
@@ -45,13 +46,41 @@ type hvsSubscriberImpl struct {
 
 func (subscriber *hvsSubscriberImpl) Start() error {
 
-	conn, err := nats.Connect(subscriber.cfg.Nats.URL, nats.ErrorHandler(func(nc *nats.Conn, s *nats.Subscription, err error) {
-		if s != nil {
-			log.Printf("ERROR: NATS: Could not process subscription for subject %q: %v", s.Subject, err)
-		} else {
-			log.Printf("ERROR: NATS: %v", err)
-		}
-	}))
+	// Get the SystemCertPool, continue with an empty pool on error
+	rootCAs, _ := x509.SystemCertPool()
+	if rootCAs == nil {
+		rootCAs = x509.NewCertPool()
+	}
+
+	// Read in the cert file
+	log.Printf("Loading ca.pem")
+	certs, err := ioutil.ReadFile("ca.pem")
+	if err != nil {
+		log.Fatalf("Failed to append %q to RootCAs: %v", "ca.pem", err)
+	}
+
+	// Append our cert to the system pool
+	if ok := rootCAs.AppendCertsFromPEM(certs); !ok {
+		log.Println("No certs appended, using system certs only")
+	}
+
+	// Trust the augmented cert pool in our client
+	tlsConfig := tls.Config{
+		InsecureSkipVerify: true,
+		RootCAs:            rootCAs,
+	}
+
+	conn, err := nats.Connect(subscriber.cfg.Nats.URL,
+		//nats.RootCAs("ca.pem"),
+		nats.Secure(&tlsConfig),
+		nats.UserCredentials("trust-agent.creds"),
+		nats.ErrorHandler(func(nc *nats.Conn, s *nats.Subscription, err error) {
+			if s != nil {
+				log.Printf("ERROR: NATS: Could not process subscription for subject %q: %v", s.Subject, err)
+			} else {
+				log.Printf("ERROR: NATS: %v", err)
+			}
+		}))
 
 	if err != nil {
 		return fmt.Errorf("Failed to connect to url %q: %+v", subscriber.cfg.Nats.URL, err)
@@ -65,6 +94,23 @@ func (subscriber *hvsSubscriberImpl) Start() error {
 	log.Printf("Successfully connected to %q", subscriber.cfg.Nats.URL)
 
 	defer subscriber.natsConnection.Close()
+
+	// test user permissions...
+	// 2021/05/01 07:49:38 Loading ca.pem
+	// 2021/05/01 07:49:38 Successfully connected to "nats://10.80.245.183:4222"
+	// 2021/05/01 07:49:38 Subscribing to "trust-agent.8032632b-8fa4-e811-906e-00163566263e.quote-request"
+	// 2021/05/01 07:49:38 Subscribing to "trust-agent.8032632b-8fa4-e811-906e-00163566263e.host-info-request"
+	// 2021/05/01 07:49:38 Subscribing to "trust-agent.8032632b-8fa4-e811-906e-00163566263e.aik-request"
+	// 2021/05/01 07:49:38 Running Trust-Agent 8032632b-8fa4-e811-906e-00163566263e...
+	// 2021/05/01 07:49:38 ERROR: NATS: nats: Permissions Violation for Subscription to "trust-agent.other-host.quote-request" using queue "quote-request-queue"
+	// 2021/05/01 07:49:48 Running Trust-Agent 8032632b-8fa4-e811-906e-00163566263e...
+	//
+	// nats-server...
+	// [24538] 2021/05/01 07:52:22.155962 [ERR] 10.105.167.153:57284 - cid:4 - "v1.10.0:go" - Subscription Violation - JWT User "UDHN62YHQ2H6MWTBRIGWRFHDRYORHHNQX54FBO724GUACRJCZLUVQJKR", Subject "trust-agent.other-host.quote-request", Queue: "quote-request-queue", SID 1
+	//
+	// subscriber.natsConnection.QueueSubscribe("trust-agent.other-host.quote-request", "quote-request-queue", func(subject string, reply string, quoteRequest *taModel.TpmQuoteRequest) {
+	// 	log.Printf("Received other-host request: %+v", quoteRequest)
+	// })
 
 	// subscribe to quote-request messages
 	subscriber.natsConnection.QueueSubscribe(subscriber.createSubject("quote-request"), "quote-request-queue", func(subject string, reply string, quoteRequest *taModel.TpmQuoteRequest) {
@@ -162,8 +208,8 @@ func (subscriber *hvsSubscriberImpl) HandleAikRequest() ([]byte, error) {
 }
 
 // returns a subject in the format "trust-agent.<hardware uuid>.<cmd>"
-func (subscriber *hvsSubscriberImpl) createSubject(cmd string) string {
-	subject := fmt.Sprintf("trust-agent.%s.%s", cmd, subscriber.hardwareUUID.String())
+func (subscriber *hvsSubscriberImpl) createSubject(request string) string {
+	subject := fmt.Sprintf("trust-agent.%s.%s", subscriber.hardwareUUID.String(), request)
 	log.Printf("Subscribing to %q", subject)
 	return subject
 }
